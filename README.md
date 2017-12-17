@@ -1,3 +1,13 @@
+## RyoheiKomiyama's repository
+- added osc client to watch telemetry datas.  
+- added osc server to control "rc" and "arm".
+
+### dependency
+- python2-osc  
+https://github.com/RyoheiKomiyama/python2-osc
+
+## Original README
+
 MAVProxy
 
 This is a MAVLink ground station written in python. 
