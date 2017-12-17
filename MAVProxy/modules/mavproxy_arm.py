@@ -47,6 +47,7 @@ class ArmModule(mp_module.MPModule):
         self.server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 10001), self.dispatcher)
         print("Serving on {}".format(self.server.server_address))
         server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.daemon = True
         server_thread.start()
 
     def checkables(self):
