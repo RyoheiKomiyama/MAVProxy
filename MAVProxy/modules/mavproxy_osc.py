@@ -82,6 +82,10 @@ class osc(mp_module.MPModule):
 
     def mavlink_packet(self, m):
         # osc
+        if True:
+            msg = osc_message_builder.OscMessageBuilder(address="/ping_from_fc")
+            msg = msg.build()
+            self.client.send(msg)
         if m.get_type() == 'ATTITUDE':
             # roll
             msg = osc_message_builder.OscMessageBuilder(address = "/roll_from_fc")
