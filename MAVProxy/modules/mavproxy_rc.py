@@ -25,12 +25,12 @@ class RCModule(mp_module.MPModule):
 
         # for osc server
         self.dispatcher = dispatcher.Dispatcher()
-        self.dispatcher.map("/debug_from_max", self.print_debug)
+        self.dispatcher.map("/debug_from_max", self.osc_debug)
         self.dispatcher.map("/thrust_from_max", self.osc_thrust)
         self.dispatcher.map("/roll_from_max", self.osc_roll)
         self.dispatcher.map("/pitch_from_max", self.osc_pitch)
         self.dispatcher.map("/yaw_from_max", self.osc_yaw)
-        self.server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 9998), self.dispatcher)
+        self.server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 10000), self.dispatcher)
         print("Serving on {}".format(self.server.server_address))
         server_thread = threading.Thread(target=self.server.serve_forever)
         server_thread.start()
@@ -136,8 +136,8 @@ class RCModule(mp_module.MPModule):
     def osc_yaw(self, unused_addr, args):
         cmd_args = [4, args]
         self.cmd_rc(cmd_args)
-    def print_debug(self, unused_addr, args):
-        print("received debug")
+    def osc_debug(self, unused_addr, args):
+        print("received debug (rc)")
 
     # stop thread
 

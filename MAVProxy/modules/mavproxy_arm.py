@@ -6,6 +6,10 @@ import time, os
 from MAVProxy.modules.lib import mp_module
 from pymavlink import mavutil
 
+from pythonosc import dispatcher
+from pythonosc import osc_server
+import threading
+
 arming_masks = {
     "all"     : 0x0001,
     "baro"    : 0x0002,
@@ -34,6 +38,16 @@ class ArmModule(mp_module.MPModule):
                                       'safetyoff'])
         self.add_command('disarm', self.cmd_disarm,   'disarm motors')
         self.was_armed = False
+
+        # for osc server
+        self.dispatcher = dispatcher.Dispatcher()
+        self.dispatcher.map("/debug_from_max", self.osc_debug)
+        self.dispatcher.map("/arm_from_max", self.osc_arm)
+        self.dispatcher.map("/disarm_from_max", self.osc_disarm)
+        self.server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 10001), self.dispatcher)
+        print("Serving on {}".format(self.server.server_address))
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.start()
 
     def checkables(self):
         return "<" + "|".join(arming_masks.keys()) + ">"
@@ -145,6 +159,17 @@ class ArmModule(mp_module.MPModule):
                 self.was_armed = armed
                 if armed and not self.all_checks_enabled():
                     self.say("Arming checks disabled")
+
+    # osc
+    def osc_arm(self, unused_addr, args):
+        cmd_args = ["throttle"]
+        self.cmd_arm(cmd_args)
+    def osc_disarm(self, unused_addr, args):
+        cmd_args = []
+        self.cmd_disarm(cmd_args)
+    def osc_debug(self, unused_addr, args):
+        print("received debug (arm)")
+
 
 def init(mpstate):
     '''initialise module'''
