@@ -5,6 +5,11 @@ import time, os, struct
 from pymavlink import mavutil
 from MAVProxy.modules.lib import mp_module
 
+from pythonosc import dispatcher
+from pythonosc import osc_server
+import threading
+
+
 class RCModule(mp_module.MPModule):
     def __init__(self, mpstate):
         super(RCModule, self).__init__(mpstate, "rc", "rc command handling", public = True)
@@ -17,6 +22,18 @@ class RCModule(mp_module.MPModule):
             self.override_period = mavutil.periodic_event(20)
         else:
             self.override_period = mavutil.periodic_event(1)
+
+        # for osc server
+        self.dispatcher = dispatcher.Dispatcher()
+        self.dispatcher.map("/debug_from_max", self.print_debug)
+        self.dispatcher.map("/thrust_from_max", self.osc_thrust)
+        self.dispatcher.map("/roll_from_max", self.osc_roll)
+        self.dispatcher.map("/pitch_from_max", self.osc_pitch)
+        self.dispatcher.map("/yaw_from_max", self.osc_yaw)
+        self.server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 9998), self.dispatcher)
+        print("Serving on {}".format(self.server.server_address))
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.start()
 
     def idle_task(self):
         if self.override_period.trigger():
@@ -104,6 +121,28 @@ class RCModule(mp_module.MPModule):
                 return
             channels[channel - 1] = value
         self.set_override(channels)
+
+
+    # osc
+    def osc_thrust(self, unused_addr, args):
+        cmd_args = [3, args]
+        self.cmd_rc(cmd_args)
+    def osc_roll(self, unused_addr, args):
+        cmd_args = [1, args]
+        self.cmd_rc(cmd_args)
+    def osc_pitch(self, unused_addr, args):
+        cmd_args = [2, args]
+        self.cmd_rc(cmd_args)
+    def osc_yaw(self, unused_addr, args):
+        cmd_args = [4, args]
+        self.cmd_rc(cmd_args)
+    def print_debug(self, unused_addr, args):
+        print("received debug")
+
+    # stop thread
+
+
+
 
 def init(mpstate):
     '''initialise module'''

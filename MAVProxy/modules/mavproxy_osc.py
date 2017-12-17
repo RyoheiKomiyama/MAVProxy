@@ -18,6 +18,10 @@ from MAVProxy.modules.lib import mp_settings
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
+from pythonosc import dispatcher
+from pythonosc import osc_server
+
+
 
 class osc(mp_module.MPModule):
     def __init__(self, mpstate):
@@ -36,9 +40,8 @@ class osc(mp_module.MPModule):
           ])
         self.add_command('osc', self.cmd_osc, "osc module", ['status','set (LOGSETTING)'])
 
-        # for osc
+        # for osc client
         self.client = udp_client.UDPClient("127.0.0.1", 9999)
-
 
     def usage(self):
         '''show help on command line options'''
@@ -81,6 +84,39 @@ class osc(mp_module.MPModule):
         # osc
         if m.get_type() == 'ATTITUDE':
             # roll
+            msg = osc_message_builder.OscMessageBuilder(address = "/roll_from_fc")
+            msg.add_arg(m.roll)
+            msg = msg.build()
+            self.client.send(msg)
+            # pitch
+            msg = osc_message_builder.OscMessageBuilder(address = "/pitch_from_fc")
+            msg.add_arg(m.pitch)
+            msg = msg.build()
+            self.client.send(msg)
+            # yaw
+            msg = osc_message_builder.OscMessageBuilder(address = "/yaw_from_fc")
+            msg.add_arg(m.yaw)
+            msg = msg.build()
+            self.client.send(msg)
+        if m.get_type() == 'GLOBAL_POSITION_INT':
+            msg = osc_message_builder.OscMessageBuilder(address = "/altitude_from_fc")
+            msg.add_arg(m.alt, osc_message_builder.OscMessageBuilder.ARG_TYPE_INT)
+            msg = msg.build()
+            self.client.send(msg)
+
+
+        ''' can't enter this if statement
+        if m.get_type() == 'HOME_POSITION':
+            # altitude home position
+            msg = osc_message_builder.OscMessageBuilder(address = "/altitude_home")
+            msg.add_arg(m.altitude, osc_message_builder.OscMessageBuilder.ARG_TYPE_INT)
+            msg = msg.build()
+            self.client.send(msg)
+        '''
+
+        ''' also work for roll pitch yaw
+        if m.get_type() == 'AHRS3':
+            # roll
             msg = osc_message_builder.OscMessageBuilder(address = "/roll")
             msg.add_arg(m.roll)
             msg = msg.build()
@@ -95,8 +131,7 @@ class osc(mp_module.MPModule):
             msg.add_arg(m.yaw)
             msg = msg.build()
             self.client.send(msg)
-            
-
+        '''
 
 def init(mpstate):
     '''initialise module'''
